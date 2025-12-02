@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="WhisperChat - A real-time chat application with private messaging and glassmorphic design" />
+  <title>WhisperChat - Real-time Private Messaging</title>
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css" />
+  <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+  <!-- Animated Background -->
+  <div class="background-animation">
+    <div class="gradient-orb orb-1"></div>
+    <div class="gradient-orb orb-2"></div>
+    <div class="gradient-orb orb-3"></div>
+  </div>
+
+  <!-- Login Screen -->
+  <div id="login-screen" class="screen">
+    <div class="glass-panel login-panel" data-testid="panel-login">
+      <div class="login-header">
+        <div class="logo-container">
+          <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+          </svg>
+        </div>
+        <h1 class="app-title">WhisperChat</h1>
+        <p class="app-subtitle">Private conversations, instant connections</p>
+      </div>
+      
+      <form id="login-form" class="login-form" data-testid="form-login">
+        <div class="input-group">
+          <label for="username-input" class="input-label">Username</label>
+          <input 
+            type="text" 
+            id="username-input" 
+            class="glass-input" 
+            placeholder="Enter your username"
+            autocomplete="off"
+            required
+            data-testid="input-username"
+          />
+        </div>
+        
+        <div class="input-group">
+          <label for="password-input" class="input-label">Password</label>
+          <input 
+            type="password" 
+            id="password-input" 
+            class="glass-input" 
+            placeholder="Enter the secret password"
+            required
+            data-testid="input-password"
+          />
+        </div>
+        
+        <div id="error-message" class="error-message" data-testid="text-error"></div>
+        
+        <button type="submit" class="glass-button primary-button" data-testid="button-login">
+          <span>Join Chat</span>
+          <svg class="button-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Chat Dashboard -->
+  <div id="chat-screen" class="screen hidden">
+    <div class="chat-container">
+      <!-- Sidebar - Online Users -->
+      <aside class="glass-panel sidebar" data-testid="panel-sidebar">
+        <div class="sidebar-header">
+          <h2 class="sidebar-title">Online Users</h2>
+          <span id="user-count" class="user-count-badge" data-testid="text-user-count">0</span>
+        </div>
+        <div id="users-list" class="users-list" data-testid="list-users">
+          <!-- Users will be dynamically added here -->
+        </div>
+      </aside>
+
+      <!-- Main Chat Area -->
+      <main class="chat-main">
+        <!-- Chat Header -->
+        <header class="glass-panel chat-header" data-testid="panel-header">
+          <div class="header-left">
+            <button id="mobile-menu-btn" class="icon-button mobile-only" data-testid="button-mobile-menu">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 12h18M3 6h18M3 18h18"/>
+              </svg>
+            </button>
+            <div class="header-title">
+              <svg class="header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+              </svg>
+              <span>WhisperChat</span>
+            </div>
+          </div>
+          <div class="header-right">
+            <span id="current-user" class="current-user" data-testid="text-current-user"></span>
+            <button id="logout-btn" class="glass-button logout-button" data-testid="button-logout">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                <polyline points="16 17 21 12 16 7"/>
+                <line x1="21" y1="12" x2="9" y2="12"/>
+              </svg>
+              <span class="desktop-only">Logout</span>
+            </button>
+          </div>
+        </header>
+
+        <!-- Messages Container -->
+        <div id="messages-container" class="messages-container" data-testid="container-messages">
+          <div class="welcome-message">
+            <div class="welcome-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+              </svg>
+            </div>
+            <h3>Welcome to WhisperChat</h3>
+            <p>Start chatting with everyone or use <code>/w username message</code> to whisper privately</p>
+          </div>
+        </div>
+
+        <!-- Message Input Area -->
+        <div class="glass-panel input-area" data-testid="panel-input">
+          <form id="message-form" class="message-form" data-testid="form-message">
+            <input 
+              type="text" 
+              id="message-input" 
+              class="glass-input message-input" 
+              placeholder="Type a message or /w username to whisper..."
+              autocomplete="off"
+              data-testid="input-message"
+            />
+            <button type="submit" class="glass-button send-button" data-testid="button-send">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 2L11 13"/>
+                <path d="M22 2L15 22L11 13L2 9L22 2Z"/>
+              </svg>
+            </button>
+          </form>
+        </div>
+      </main>
+    </div>
+
+    <!-- Mobile Sidebar Overlay -->
+    <div id="sidebar-overlay" class="sidebar-overlay hidden"></div>
+  </div>
+
+  <!-- Audio elements for sounds (optional) -->
+  <audio id="send-sound" preload="auto">
+    <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2teleQAP" type="audio/wav">
+  </audio>
+  <audio id="receive-sound" preload="auto">
+    <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2teleQAP" type="audio/wav">
+  </audio>
+
+  <script src="/app.js"></script>
+</body>
+</html>
