@@ -38,12 +38,8 @@ export async function registerRoutes(
 
   // Find user by username (case-insensitive)
   function findUserByUsername(username: string): ConnectedUser | undefined {
-    for (const user of connectedUsers.values()) {
-      if (user.username.toLowerCase() === username.toLowerCase()) {
-        return user;
-      }
-    }
-    return undefined;
+    const users = Array.from(connectedUsers.values());
+    return users.find(user => user.username.toLowerCase() === username.toLowerCase());
   }
 
   // Socket.io connection handling
