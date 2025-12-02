@@ -1,6 +1,8 @@
 import { build as esbuild } from "esbuild";
 import { build as viteBuild } from "vite";
-import { rm, readFile } from "fs/promises";
+import { rm, readFile, cp, mkdir } from "fs/promises";
+import { existsSync } from "fs";
+import path from "path";
 
 // server deps to bundle to reduce openat(2) syscalls
 // which helps cold start times
@@ -24,6 +26,7 @@ const allowlist = [
   "openai",
   "passport",
   "passport-local",
+  "socket.io",
   "stripe",
   "uuid",
   "ws",
@@ -37,6 +40,13 @@ async function buildAll() {
 
   console.log("building client...");
   await viteBuild();
+
+  // Copy vanilla HTML/CSS/JS public folder for WhisperChat
+  const publicFolder = path.resolve(process.cwd(), "public");
+  if (existsSync(publicFolder)) {
+    console.log("copying public folder to dist...");
+    await cp(publicFolder, path.resolve(process.cwd(), "dist/public"), { recursive: true });
+  }
 
   console.log("building server...");
   const pkg = JSON.parse(await readFile("package.json", "utf-8"));

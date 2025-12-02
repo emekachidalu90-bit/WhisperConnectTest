@@ -1,0 +1,16 @@
+# Render Blueprint for WhisperChat
+# https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: whisperchat
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+    healthCheckPath: /

@@ -20,8 +20,11 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  // Serve static files from public folder for vanilla HTML/CSS/JS
-  app.use(express.static(path.resolve(process.cwd(), "public")));
+  // Serve static files from public folder for vanilla HTML/CSS/JS (development only)
+  // In production, static.ts handles serving from dist/public
+  if (process.env.NODE_ENV !== "production") {
+    app.use(express.static(path.resolve(process.cwd(), "public")));
+  }
 
   // Initialize Socket.io
   const io = new SocketIOServer(httpServer, {

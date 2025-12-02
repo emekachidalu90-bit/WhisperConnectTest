@@ -12,23 +12,29 @@ Preferred communication style: Simple, everyday language.
 
 ### Technology Stack
 
-**Frontend Framework**: React with TypeScript
-- Build tool: Vite for fast development and optimized production builds
-- Routing: Wouter for lightweight client-side routing
-- State Management: TanStack React Query for server state management
-- UI Components: Radix UI primitives with shadcn/ui component library
-- Styling: Tailwind CSS with custom design system (New York style variant)
+**Frontend**: Vanilla HTML, CSS, and JavaScript
+- No frameworks - pure HTML5, CSS3, and ES6+ JavaScript
+- Socket.io client for real-time WebSocket communication
+- Glassmorphic CSS design with backdrop-filter effects
+- Responsive design with mobile-first approach
 
 **Backend Framework**: Node.js with Express
-- Runtime: TypeScript with ESM modules
+- Runtime: TypeScript with ESM modules (compiled to CommonJS for production)
 - Real-time Communication: Socket.io for WebSocket-based messaging
-- Session Management: In-memory session storage (production-ready for PostgreSQL sessions via connect-pg-simple)
+- In-memory user storage for active sessions
 
-**Database Solution**: 
-- ORM: Drizzle ORM configured for PostgreSQL
-- Database Provider: Neon serverless PostgreSQL
-- Schema Management: Drizzle Kit for migrations
-- Current Schema: Simple user table with username/password authentication
+**Project Structure**:
+```
+public/           # Vanilla HTML/CSS/JS frontend
+  ├── index.html  # Main HTML file with login and chat screens
+  ├── style.css   # Glassmorphic styling
+  ├── app.js      # Client-side Socket.io logic
+  └── favicon.png # App icon
+server/           # Express + Socket.io backend
+  ├── index.ts    # Server entry point
+  ├── routes.ts   # Socket.io event handlers
+  └── static.ts   # Production static file serving
+```
 
 ### Authentication Architecture
 
@@ -38,7 +44,7 @@ Preferred communication style: Simple, everyday language.
 - No persistent sessions across server restarts
 - Socket.io connection tied to login state
 
-**Rationale**: Simplified authentication suitable for private/demo deployment. The architecture is designed to be easily upgradeable to proper session-based auth with database persistence.
+**Rationale**: Simplified authentication suitable for private/demo deployment.
 
 ### Real-time Messaging Architecture
 
@@ -51,88 +57,86 @@ Preferred communication style: Simple, everyday language.
 
 **Message Types**:
 1. Public chat messages (visible to all users)
-2. Whisper messages (private, recipient-only)
+2. Whisper messages (private, recipient-only) - use `/w username message`
 3. System messages (join/leave notifications)
 
 **Design Decision**: Socket.io chosen over raw WebSockets for built-in reconnection handling, room support, and event abstraction. The whisper command pattern (`/w username message`) provides familiar UX for users from gaming platforms.
 
-### Frontend Architecture
-
-**Component Structure**:
-- Route-based organization with wouter for SPA navigation
-- Shadcn/ui provides pre-built, accessible component primitives
-- Custom design system extends Tailwind with glassmorphic styling variables
-- Responsive design with mobile-first approach
-
-**Design System**:
-- CSS custom properties for theme colors and glassmorphic effects
-- Consistent spacing primitives (2, 4, 6, 8 unit scale)
-- Typography hierarchy using DM Sans/Inter fonts
-- Backdrop blur and transparency effects throughout UI
-- Light/dark mode support via CSS variables
-
-**State Management Pattern**: 
-- React Query for server data (configured with aggressive caching)
-- Local component state for UI interactions
-- Socket.io event handlers manage real-time updates
-- No global state library needed due to simple state requirements
-
 ### Build and Deployment
 
 **Development Mode**:
-- Vite dev server with HMR for frontend
 - Express server with tsx for TypeScript execution
-- Vite middleware integration for seamless full-stack development
-- Replit-specific plugins for cartographer and dev banner
+- Static files served directly from `public/` folder
+- Run with `npm run dev`
 
 **Production Build**:
-- ESBuild bundles server code with selective dependency bundling
-- Vite builds optimized client assets
-- Single-file server output (dist/index.cjs) for fast cold starts
-- Static asset serving from dist/public
+- Run `npm run build` to create production bundle
+- ESBuild bundles server code to `dist/index.cjs`
+- Public folder copied to `dist/public/`
+- Run with `npm start`
 
-**Bundling Strategy**: Server dependencies are selectively bundled (allowlist) to reduce syscalls and improve cold start times while keeping framework code external. This balances bundle size with startup performance.
+## Deployment on Render
 
-## External Dependencies
+### Option 1: Using render.yaml (Blueprint)
+1. Push code to a Git repository (GitHub, GitLab, etc.)
+2. Create a new "Blueprint" on Render
+3. Connect your repository
+4. Render will auto-detect `render.yaml` and configure everything
 
-### Third-Party Services
+### Option 2: Manual Setup
+1. Create a new "Web Service" on Render
+2. Connect your Git repository
+3. Configure:
+   - **Build Command**: `npm install && npm run build`
+   - **Start Command**: `npm start`
+   - **Environment Variables**:
+     - `NODE_ENV`: `production`
+     - `PORT`: `10000` (or let Render set it automatically)
 
-**Database**: Neon Serverless PostgreSQL
-- Accessed via `@neondatabase/serverless` driver
-- Connection URL from `DATABASE_URL` environment variable
-- Serverless-optimized for edge deployment
+### Important Notes for Render
+- The app uses WebSockets (Socket.io), which Render supports on all plans
+- No database required - users are stored in memory
+- Sessions reset when the service restarts
+- Free tier may sleep after inactivity (15 minutes)
 
-### Key NPM Packages
-
-**UI Framework**:
-- `@radix-ui/*`: Headless UI primitives for accessibility
-- `tailwindcss`: Utility-first CSS framework
-- `class-variance-authority` + `clsx`: Component variant management
-- `lucide-react`: Icon library
-
-**Data Management**:
-- `drizzle-orm`: Type-safe SQL ORM
-- `drizzle-zod`: Zod schema generation from database schema
-- `@tanstack/react-query`: Async state management
+## Key NPM Packages
 
 **Real-time Communication**:
-- `socket.io`: WebSocket library for bidirectional communication
-- `socket.io-client`: Client-side Socket.io (bundled in served files)
+- `socket.io`: WebSocket library for bidirectional communication (server)
+- Socket.io client is loaded via CDN in the frontend
 
-**Form Handling**:
-- `react-hook-form`: Performant form state management
-- `@hookform/resolvers`: Validation resolver integration
-- `zod`: Runtime type validation
-
-**Session Management**:
-- `express-session`: Session middleware
-- `connect-pg-simple`: PostgreSQL session store (configured but not actively used)
+**Server Framework**:
+- `express`: Web framework for Node.js
 
 **Development Tools**:
-- `@replit/vite-plugin-*`: Replit-specific development enhancements
 - `tsx`: TypeScript execution for Node.js
-- `drizzle-kit`: Database migration tooling
+- `esbuild`: Fast JavaScript bundler
+- `vite`: Build tool (used for bundling)
 
-### API Integrations
+## API Reference
 
-Currently no external API integrations beyond the database. The application is self-contained with Socket.io handling all real-time communication internally.
+### Socket.io Events
+
+**Client to Server**:
+- `login`: `{ username: string, password: string }` - Authenticate user
+- `public-message`: `{ message: string }` - Send public message
+- `whisper`: `{ to: string, message: string }` - Send private message
+- `logout`: No payload - Disconnect user
+
+**Server to Client**:
+- `login-success`: `{ username: string }` - Authentication successful
+- `login-error`: `{ message: string }` - Authentication failed
+- `user-list`: `string[]` - Updated list of online users
+- `user-joined`: `{ username: string }` - New user connected
+- `user-left`: `{ username: string }` - User disconnected
+- `public-message`: `{ username: string, message: string }` - New public message
+- `whisper`: `{ from: string, to: string, message: string }` - Received whisper
+- `whisper-sent`: `{ to: string, message: string }` - Whisper delivery confirmed
+- `whisper-error`: `{ message: string }` - Whisper failed
+
+## Recent Changes
+
+- Built vanilla HTML/CSS/JS frontend with glassmorphic design
+- Implemented Socket.io real-time chat with whisper support
+- Added Render.com deployment configuration
+- Created production build pipeline
